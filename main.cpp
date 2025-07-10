@@ -1,6 +1,5 @@
 // GLFW + GLEW Rotating 3D Cube
 // Requires: glew32, glfw3, opengl32, and GLM (header-only)
-//sus
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
