@@ -1,0 +1,31 @@
+# Ignore build output folders
+build/
+bin/
+out/
+
+# Ignore VSCode settings folder
+.vscode/
+
+# Ignore executables
+*.exe
+*.out
+*.app
+
+# Ignore object files and temporary files
+*.o
+*.obj
+*.pch
+
+# Ignore CMake generated files (if you ever use CMake)
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore text files (if you want)
+*.txt
+
+# Ignore DLLs, shared libraries
+*.dll
+*.so
+*.dylib
