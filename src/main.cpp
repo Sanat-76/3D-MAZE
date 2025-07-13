@@ -17,8 +17,8 @@ float camZ = spacing * 2;
 float camY = 4.0f;
 float yaw = -90.0f, pitch = 0.0f;
 float frontX = 0.0f, frontY = 0.0f, frontZ = -1.0f;
-float speedForward = 0.0053f;
-float speedTurn = 0.08f;
+float speedForward = 0.015f;
+float speedTurn = 0.09f;
 
 GLuint loadShader(const char* vertexPath, const char* fragmentPath);
 void processInput(GLFWwindow* window);
