@@ -1,120 +1,82 @@
+// main.cpp
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#define _USE_MATH_DEFINES
-#include <cmath>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include "maze.h"
 
 #define MAZE_SIZE 20
 const float spacing = 4.0f;
-const float totalSize = MAZE_SIZE * spacing;
 
-// Camera state
-float camX = spacing * 3;     // Start near entrance
-float camZ = spacing * 2;     // Extra row in front of maze
-float camY = 2.0f;
+float camX = spacing * 3;
+float camZ = spacing * 2;
+float camY = 4.0f;
 float yaw = -90.0f, pitch = 0.0f;
 float frontX = 0.0f, frontY = 0.0f, frontZ = -1.0f;
 float speedForward = 0.025f;
 float speedTurn = 0.35f;
 
-float radians(float degrees) {
-    return degrees * M_PI / 180.0f;
-}
+GLuint loadShader(const char* vertexPath, const char* fragmentPath);
+void processInput(GLFWwindow* window);
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    if (height == 0) height = 1;
-    glViewport(0, 0, width, height);
-}
-
-void initOpenGL()
-{
-    glEnable(GL_DEPTH_TEST);
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-}
-
-int main()
-{
-    if (!glfwInit())
-    {
-        std::cerr << "Failed to initialize GLFW.\n";
+int main() {
+    if (!glfwInit()) {
+        std::cerr << "Failed to initialize GLFW\n";
         return -1;
     }
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "3D Maze (First-Person)", NULL, NULL);
-    if (!window)
-    {
-        std::cerr << "Failed to create GLFW window.\n";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* window = glfwCreateWindow(800, 600, "3D Maze - Phong", nullptr, nullptr);
+    if (!window) {
+        std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
         return -1;
     }
-
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK)
-    {
-        std::cerr << "Failed to initialize GLEW.\n";
+    if (glewInit() != GLEW_OK) {
+        std::cerr << "Failed to initialize GLEW\n";
         return -1;
     }
 
-    initOpenGL();
+    glEnable(GL_DEPTH_TEST);
+    GLuint shaderProgram = loadShader("shader.vert", "shader.frag");
+    initMaze();
 
-    while (!glfwWindowShouldClose(window))
-    {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    while (!glfwWindowShouldClose(window)) {
+        processInput(window);
 
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
-        float aspect = static_cast<float>(width) / static_cast<float>(height);
         glViewport(0, 0, width, height);
 
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        gluPerspective(65.0, aspect, 0.1, 300.0);
+        glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Handle input
-        float deltaX = 0.0f, deltaZ = 0.0f;
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-            deltaX = frontX * speedForward;
-            deltaZ = frontZ * speedForward;
-        }
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-            deltaX = -frontX * speedForward;
-            deltaZ = -frontZ * speedForward;
-        }
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-            yaw -= speedTurn;
-        }
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-            yaw += speedTurn;
-        }
+        glm::mat4 view = glm::lookAt(glm::vec3(camX, camY, camZ),
+                                     glm::vec3(camX + frontX, camY, camZ + frontZ),
+                                     glm::vec3(0.0f, 1.0f, 0.0f));
 
-        // Update front vector
-        frontX = cos(radians(pitch)) * cos(radians(yaw));
-        frontY = 0.0f;
-        frontZ = cos(radians(pitch)) * sin(radians(yaw));
+        glm::mat4 projection = glm::perspective(glm::radians(65.0f), (float)width / (float)height, 0.1f, 300.0f);
+        glm::vec3 lightPos(camX, camY, camZ);
 
-        // Try to move if no collision
-        if (!checkCollision(camX + deltaX, camZ + deltaZ, spacing)) {
-            camX += deltaX;
-            camZ += deltaZ;
-        }
+        glUseProgram(shaderProgram);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniform3fv(glGetUniformLocation(shaderProgram, "lightPos"), 1, glm::value_ptr(lightPos));
+        glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(glm::vec3(camX, camY, camZ)));
+        glUniform3f(glGetUniformLocation(shaderProgram, "lightColor"), 1.0f, 1.0f, 1.0f);
+        glUniform3f(glGetUniformLocation(shaderProgram, "objectColor"), 0.2f, 0.6f, 1.0f);
 
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-
-        float lookX = camX + frontX;
-        float lookY = camY;
-        float lookZ = camZ + frontZ;
-
-        gluLookAt(camX, camY, camZ,
-                  lookX, lookY, lookZ,
-                  0.0f, 1.0f, 0.0f);
-
-        drawMaze();
+        drawMaze(shaderProgram);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -123,4 +85,59 @@ int main()
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
+}
+
+void processInput(GLFWwindow* window) {
+    float deltaX = 0.0f, deltaZ = 0.0f;
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        deltaX = frontX * speedForward;
+        deltaZ = frontZ * speedForward;
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        deltaX = -frontX * speedForward;
+        deltaZ = -frontZ * speedForward;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) yaw -= speedTurn;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) yaw += speedTurn;
+
+    frontX = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+    frontY = 0.0f;
+    frontZ = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+
+    if (!checkCollision(camX + deltaX, camZ + deltaZ, spacing)) {
+        camX += deltaX;
+        camZ += deltaZ;
+    }
+}
+
+GLuint loadShader(const char* vertexPath, const char* fragmentPath) {
+    std::ifstream vFile(vertexPath), fFile(fragmentPath);
+    std::stringstream vStream, fStream;
+    vStream << vFile.rdbuf();
+    fStream << fFile.rdbuf();
+
+    std::string vCode = vStream.str();
+    std::string fCode = fStream.str();
+    const char* vShaderCode = vCode.c_str();
+    const char* fShaderCode = fCode.c_str();
+
+    GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex, 1, &vShaderCode, nullptr);
+    glCompileShader(vertex);
+
+    GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment, 1, &fShaderCode, nullptr);
+    glCompileShader(fragment);
+
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vertex);
+    glAttachShader(program, fragment);
+    glLinkProgram(program);
+
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+    return program;
 }

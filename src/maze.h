@@ -3,9 +3,8 @@
 
 #define MAZE_SIZE 20
 
-extern int maze[MAZE_SIZE][MAZE_SIZE];
-
-void drawMaze();
+void initMaze();
+void drawMaze(unsigned int shaderProgram);
 bool checkCollision(float x, float z, float spacing);
 
 #endif
