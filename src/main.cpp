@@ -16,7 +16,7 @@ float camY = 2.0f;
 float yaw = -90.0f, pitch = 0.0f;
 float frontX = 0.0f, frontY = 0.0f, frontZ = -1.0f;
 float speedForward = 0.025f;
-float speedTurn = 0.15f;
+float speedTurn = 0.35f;
 
 float radians(float degrees) {
     return degrees * M_PI / 180.0f;
