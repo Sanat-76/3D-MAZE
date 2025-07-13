@@ -2,32 +2,32 @@
 #include "maze.h"
 
 int maze[MAZE_SIZE][MAZE_SIZE] = {
-    // 20x20 maze example with entrance on top edge (two open blocks) and 3x3 open center
-    {1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},  // Entrance at (0,2) and (0,3)
+    // Entrance at (0,2) and (0,3)
+    {1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,0,1},
-    {1,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,0,1,0,1},
-    {1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,1,0,1,0,1},
-    {1,0,1,0,1,0,0,0,1,0,1,0,1,0,0,1,0,1,0,1},
-    {1,0,1,0,1,1,1,1,1,0,1,0,1,1,0,1,0,1,0,1},
-    {1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1},
-    {1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,0,1},
-    {1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1,0,1},
+    {1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1},
+    {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1},
+    {1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1},
 
-    {1,0,1,1,1,0,1,1,1,1,1,1,0,1,1,1,0,1,0,1},
-    {1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,1},
-    {1,0,1,0,1,1,1,1,1,1,0,1,1,1,0,1,0,1,0,1},
+    {1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1},
+    {1,0,1,0,1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,1},
+    {1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1},
+    {1,1,1,1,1,1,1,1,0,0,1,0,1,1,1,1,1,1,0,1},
+    {1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1},
+    
+    {1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,0,1},
+    {1,0,1,0,0,0,0,0,0,1,1,1,0,0,0,1,0,1,0,1},
+    {1,0,1,0,1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,1},
     {1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,1},
     {1,1,1,0,1,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1},
 
     {1,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1},
     {1,0,1,1,1,1,1,0,1,1,0,1,1,1,0,1,1,1,1,1},
     {1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1},
-
-    // Center 3x3 clear space at maze[8..10][8..10]
-    {1,0,0,1,1,0,1,0,1,0,1,1,0,1,1,0,1,0,1,1}, // row 18
-    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1} // row 19
+    {1,0,0,1,1,0,1,0,1,0,1,1,0,1,1,0,1,0,1,1},
+    {1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1}  // Exit at (19,10)
 };
+
 
 void drawCube(float x, float y, float z)
 {
@@ -37,46 +37,56 @@ void drawCube(float x, float y, float z)
     glPushMatrix();
     glTranslatef(x, y, z);
 
+    // Solid cube
     glBegin(GL_QUADS);
     glColor3f(0.2f, 0.6f, 1.0f);
 
-    // Front face
+    // Front
     glVertex3f(-half, -half, half);
     glVertex3f(half, -half, half);
     glVertex3f(half, half, half);
     glVertex3f(-half, half, half);
 
-    // Back face
+    // Back
     glVertex3f(-half, -half, -half);
     glVertex3f(-half, half, -half);
     glVertex3f(half, half, -half);
     glVertex3f(half, -half, -half);
 
-    // Left face
+    // Left
     glVertex3f(-half, -half, -half);
     glVertex3f(-half, -half, half);
     glVertex3f(-half, half, half);
     glVertex3f(-half, half, -half);
 
-    // Right face
+    // Right
     glVertex3f(half, -half, -half);
     glVertex3f(half, half, -half);
     glVertex3f(half, half, half);
     glVertex3f(half, -half, half);
 
-    // Top face
+    // Top
     glVertex3f(-half, half, -half);
     glVertex3f(-half, half, half);
     glVertex3f(half, half, half);
     glVertex3f(half, half, -half);
 
-    // Bottom face
+    // Bottom
     glVertex3f(-half, -half, -half);
     glVertex3f(half, -half, -half);
     glVertex3f(half, -half, half);
     glVertex3f(-half, -half, half);
-
     glEnd();
+
+    // Wireframe edges
+    glColor3f(0, 0, 0);
+    glLineWidth(2.0f);
+    glBegin(GL_LINE_LOOP); glVertex3f(-half, -half, half); glVertex3f(half, -half, half); glVertex3f(half, half, half); glVertex3f(-half, half, half); glEnd(); // Front
+    glBegin(GL_LINE_LOOP); glVertex3f(-half, -half, -half); glVertex3f(-half, half, -half); glVertex3f(half, half, -half); glVertex3f(half, -half, -half); glEnd(); // Back
+    glBegin(GL_LINE_LOOP); glVertex3f(-half, -half, -half); glVertex3f(-half, -half, half); glVertex3f(-half, half, half); glVertex3f(-half, half, -half); glEnd(); // Left
+    glBegin(GL_LINE_LOOP); glVertex3f(half, -half, -half); glVertex3f(half, half, -half); glVertex3f(half, half, half); glVertex3f(half, -half, half); glEnd(); // Right
+    glBegin(GL_LINE_LOOP); glVertex3f(-half, half, -half); glVertex3f(-half, half, half); glVertex3f(half, half, half); glVertex3f(half, half, -half); glEnd(); // Top
+    glBegin(GL_LINE_LOOP); glVertex3f(-half, -half, -half); glVertex3f(half, -half, -half); glVertex3f(half, -half, half); glVertex3f(-half, -half, half); glEnd(); // Bottom
 
     glPopMatrix();
 }
@@ -93,41 +103,10 @@ void drawBasePlatform(float totalSize)
     glColor3f(0.3f, 0.3f, 0.3f);
 
     // Top
-    glVertex3f(0, height, 0);
-    glVertex3f(totalSize, height, 0);
-    glVertex3f(totalSize, height, -totalSize);
-    glVertex3f(0, height, -totalSize);
-
-    // Bottom
-    glVertex3f(0, 0, 0);
-    glVertex3f(totalSize, 0, 0);
-    glVertex3f(totalSize, 0, -totalSize);
-    glVertex3f(0, 0, -totalSize);
-
-    // Front
-    glVertex3f(0, 0, 0);
-    glVertex3f(totalSize, 0, 0);
-    glVertex3f(totalSize, height, 0);
-    glVertex3f(0, height, 0);
-
-    // Back
-    glVertex3f(0, 0, -totalSize);
-    glVertex3f(0, height, -totalSize);
-    glVertex3f(totalSize, height, -totalSize);
-    glVertex3f(totalSize, 0, -totalSize);
-
-    // Left
-    glVertex3f(0, 0, -totalSize);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, height, 0);
-    glVertex3f(0, height, -totalSize);
-
-    // Right
-    glVertex3f(totalSize, 0, -totalSize);
-    glVertex3f(totalSize, height, -totalSize);
-    glVertex3f(totalSize, height, 0);
-    glVertex3f(totalSize, 0, 0);
-
+    glVertex3f(-4.0f, height, 4.0f);                     // Add extra margin
+    glVertex3f(totalSize + 4.0f, height, 4.0f);
+    glVertex3f(totalSize + 4.0f, height, -totalSize - 4.0f);
+    glVertex3f(-4.0f, height, -totalSize - 4.0f);
     glEnd();
 
     glPopMatrix();
@@ -144,11 +123,20 @@ void drawMaze()
         for (int j = 0; j < MAZE_SIZE; ++j)
         {
             if (maze[i][j] == 1)
-            {
                 drawCube(j * spacing + half, half, -i * spacing - half);
-            }
         }
     }
 
     drawBasePlatform(totalSize);
+}
+
+bool checkCollision(float x, float z, float spacing)
+{
+    int col = static_cast<int>(x / spacing);
+    int row = static_cast<int>(-z / spacing);
+
+    if (row < 0 || row >= MAZE_SIZE || col < 0 || col >= MAZE_SIZE)
+        return false;  // outside maze is allowed
+
+    return maze[row][col] == 1;  // collision if wall
 }

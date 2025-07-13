@@ -5,8 +5,7 @@
 
 extern int maze[MAZE_SIZE][MAZE_SIZE];
 
-void drawCube(float x, float y, float z);
 void drawMaze();
-void drawBasePlatform(float totalSize);
+bool checkCollision(float x, float z, float spacing);
 
 #endif
