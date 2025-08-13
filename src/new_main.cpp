@@ -537,9 +537,9 @@ int main(int argc, char** argv) {
     glutKeyboardUpFunc(keyboardUp);
     glutIdleFunc(idle);
 
-    printf("3D Maze with Cinematic Transition\n");
-    printf("Watch the dramatic descent from aerial view to ground level!\n");
-    printf("Controls (after transition):\n");
+    printf("\t3D Maze with Cinematic Transition\n");
+    printf("\tWatch the dramatic descent from aerial view to ground level!\n");
+    printf("\tControls (after transition):\n");
     printf("WASD - Move\n");
     printf("Q/E - Turn left/right\n");
     printf("R - Reset to entrance\n");

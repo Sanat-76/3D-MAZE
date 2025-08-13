@@ -1,82 +1,152 @@
-// main.cpp
+#define _USE_MATH_DEFINES
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <cmath>
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include "maze.h"
 
 #define MAZE_SIZE 20
 const float spacing = 4.0f;
+const float totalSize = MAZE_SIZE * spacing;
+const float mazeCenterX = totalSize / 2.0f;    // 40.0f
+const float mazeCenterZ = -totalSize / 2.0f;   // -40.0f
+const float mazeCenterY = 0.0f;
 
-float camX = spacing * 3;
-float camZ = spacing * 2;
-float camY = 4.0f;
-float yaw = -90.0f, pitch = 0.0f;
-float frontX = 0.0f, frontY = 0.0f, frontZ = -1.0f;
-float speedForward = 0.015f;
-float speedTurn = 0.09f;
+float yaw = -90.0f;
+float pitch = -30.0f;
+float lastX = 0.0f;
+float lastY = 0.0f;
+bool firstMouse = true;
+float radius = totalSize * 1.5f;  // camera distance to see full maze
 
-GLuint loadShader(const char* vertexPath, const char* fragmentPath);
-void processInput(GLFWwindow* window);
+bool leftMousePressed = false;
 
-int main() {
-    if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW\n";
+float radians(float degrees) {
+    return degrees * M_PI / 180.0f;
+}
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    // Prevent divide by zero
+    if (height == 0) height = 1;
+    glViewport(0, 0, width, height);
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT)
+    {
+        if (action == GLFW_PRESS)
+        {
+            leftMousePressed = true;
+            firstMouse = true; // reset to avoid jump when drag starts
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            leftMousePressed = false;
+        }
+    }
+}
+
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (!leftMousePressed)
+    {
+        firstMouse = true;  // reset when not dragging
+        return;
+    }
+
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+        return;
+    }
+
+    // Flip horizontal movement for natural feel
+    float xoffset = lastX - xpos;
+    float yoffset = lastY - ypos;
+
+    lastX = xpos;
+    lastY = ypos;
+
+    float sensitivity = 0.2f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    yaw += xoffset;
+    pitch += yoffset;
+
+    // Clamp pitch so camera doesn't flip upside down
+    if (pitch > 89.0f) pitch = 89.0f;
+    if (pitch < -89.0f) pitch = -89.0f;
+}
+
+void initOpenGL()
+{
+    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+}
+
+int main()
+{
+    if (!glfwInit())
+    {
+        std::cerr << "Failed to initialize GLFW.\n";
         return -1;
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    GLFWwindow* window = glfwCreateWindow(800, 600, "3D Maze - Phong", nullptr, nullptr);
-    if (!window) {
-        std::cerr << "Failed to create GLFW window\n";
+    GLFWwindow* window = glfwCreateWindow(800, 600, "3D Maze", NULL, NULL);
+    if (!window)
+    {
+        std::cerr << "Failed to create GLFW window.\n";
         glfwTerminate();
         return -1;
     }
+
     glfwMakeContextCurrent(window);
 
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetCursorPosCallback(window, cursor_position_callback);
+
+    // Show cursor normally
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
     glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK) {
-        std::cerr << "Failed to initialize GLEW\n";
+    if (glewInit() != GLEW_OK)
+    {
+        std::cerr << "Failed to initialize GLEW.\n";
         return -1;
     }
 
-    glEnable(GL_DEPTH_TEST);
-    GLuint shaderProgram = loadShader("shader.vert", "shader.frag");
-    initMaze();
+    initOpenGL();
 
-    while (!glfwWindowShouldClose(window)) {
-        processInput(window);
+    while (!glfwWindowShouldClose(window))
+    {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
+        float aspect = static_cast<float>(width) / static_cast<float>(height);
+
         glViewport(0, 0, width, height);
 
-        glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluPerspective(60.0, aspect, 0.1, 300.0);  // larger far plane for bigger maze
 
-        glm::mat4 view = glm::lookAt(glm::vec3(camX, camY, camZ),
-                                     glm::vec3(camX + frontX, camY, camZ + frontZ),
-                                     glm::vec3(0.0f, 1.0f, 0.0f));
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
 
-        glm::mat4 projection = glm::perspective(glm::radians(65.0f), (float)width / (float)height, 0.1f, 300.0f);
-        glm::vec3 lightPos(camX, camY, camZ);
+        float camX = mazeCenterX + radius * cos(radians(pitch)) * cos(radians(yaw));
+        float camY = mazeCenterY + radius * sin(radians(pitch));
+        float camZ = mazeCenterZ + radius * cos(radians(pitch)) * sin(radians(yaw));
 
-        glUseProgram(shaderProgram);
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniform3fv(glGetUniformLocation(shaderProgram, "lightPos"), 1, glm::value_ptr(lightPos));
-        glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(glm::vec3(camX, camY, camZ)));
-        glUniform3f(glGetUniformLocation(shaderProgram, "lightColor"), 1.0f, 1.0f, 1.0f);
-        glUniform3f(glGetUniformLocation(shaderProgram, "objectColor"), 0.2f, 0.6f, 1.0f);
+        gluLookAt(camX, camY, camZ, mazeCenterX, 0.0f, mazeCenterZ, 0.0f, 1.0f, 0.0f);
 
-        drawMaze(shaderProgram);
+        drawMaze();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -85,59 +155,4 @@ int main() {
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
-}
-
-void processInput(GLFWwindow* window) {
-    float deltaX = 0.0f, deltaZ = 0.0f;
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        deltaX = frontX * speedForward;
-        deltaZ = frontZ * speedForward;
-    }
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        deltaX = -frontX * speedForward;
-        deltaZ = -frontZ * speedForward;
-    }
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) yaw -= speedTurn;
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) yaw += speedTurn;
-
-    frontX = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
-    frontY = 0.0f;
-    frontZ = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
-
-    if (!checkCollision(camX + deltaX, camZ + deltaZ, spacing)) {
-        camX += deltaX;
-        camZ += deltaZ;
-    }
-}
-
-GLuint loadShader(const char* vertexPath, const char* fragmentPath) {
-    std::ifstream vFile(vertexPath), fFile(fragmentPath);
-    std::stringstream vStream, fStream;
-    vStream << vFile.rdbuf();
-    fStream << fFile.rdbuf();
-
-    std::string vCode = vStream.str();
-    std::string fCode = fStream.str();
-    const char* vShaderCode = vCode.c_str();
-    const char* fShaderCode = fCode.c_str();
-
-    GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex, 1, &vShaderCode, nullptr);
-    glCompileShader(vertex);
-
-    GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment, 1, &fShaderCode, nullptr);
-    glCompileShader(fragment);
-
-    GLuint program = glCreateProgram();
-    glAttachShader(program, vertex);
-    glAttachShader(program, fragment);
-    glLinkProgram(program);
-
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-    return program;
 }
