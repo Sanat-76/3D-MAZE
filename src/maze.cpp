@@ -119,8 +119,8 @@ void drawMaze(unsigned int shaderProgram) {
                 glm::mat4 model = glm::mat4(1.0f);
                 float x = j * spacing + spacing / 2.0f;
                 float z = -i * spacing - spacing / 2.0f;
-                model = glm::translate(model, glm::vec3(x, (spacing * 1.5f) / 2.0f, z));
-                model = glm::scale(model, glm::vec3(spacing, spacing * 1.5f, spacing));
+                model = glm::translate(model, glm::vec3(x, (spacing * 2.0f) / 2.0f, z));
+                model = glm::scale(model, glm::vec3(spacing, spacing * 2.0f, spacing));
                 glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
                 glDrawArrays(GL_TRIANGLES, 0, 36);
             }

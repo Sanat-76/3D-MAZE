@@ -11,7 +11,10 @@ uniform mat4 projection;
 
 void main()
 {
+    // Position in world space
     FragPos = vec3(model * vec4(aPos, 1.0));
-    Normal = mat3(transpose(inverse(model))) * aNormal;  
+    // Normal in world space
+    Normal = mat3(transpose(inverse(model))) * aNormal;
+    // Final vertex position
     gl_Position = projection * view * vec4(FragPos, 1.0);
 }

@@ -90,12 +90,22 @@ int main() {
                                                 0.1f, 300.0f);
 
         glm::vec3 lightPos(camX, camY, camZ);
+        glm::vec3 lightDir(frontX, frontY, frontZ); // NEW
 
         glUseProgram(shaderProgram);
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniform3fv(glGetUniformLocation(shaderProgram, "lightPos"), 1, glm::value_ptr(lightPos));
         glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(glm::vec3(camX, camY, camZ)));
+
+        glUniform3fv(glGetUniformLocation(shaderProgram, "lightDir"), 1, glm::value_ptr(lightDir)); // NEW
+
+        // Spotlight cutoff angles (in radians)
+        float innerAngle = glm::cos(glm::radians(8.5f)); // NEW
+        float outerAngle = glm::cos(glm::radians(15.0f)); 
+        glUniform1f(glGetUniformLocation(shaderProgram, "cutOff"), innerAngle); // NEW
+        glUniform1f(glGetUniformLocation(shaderProgram, "outerCutOff"), outerAngle); // NEW
+
         glUniform3f(glGetUniformLocation(shaderProgram, "lightColor"), 1.0f, 1.0f, 1.0f);
         glUniform3f(glGetUniformLocation(shaderProgram, "objectColor"), 0.2f, 0.6f, 1.0f);
 
